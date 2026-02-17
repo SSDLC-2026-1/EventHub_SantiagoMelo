@@ -79,7 +79,7 @@ def validate_card_number(card_number: str) -> Tuple[str, str]:
         card_number (str)
 
     Returns:
-        (digits, error_message)
+        (card, error_message)
 
     Notes:
         - If invalid → return ("", "Error message")
@@ -190,10 +190,10 @@ def validate_payment_form(
     clean = {}
     errors = {}
 
-    last4, err = validate_card_number(card_number)
+    card, err = validate_card_number(card_number)
     if err:
         errors["card_number"] = err
-    clean["card_last4"] = last4
+    clean["card"] = card
 
     exp_clean, err = validate_exp_date(exp_date)
     if err:

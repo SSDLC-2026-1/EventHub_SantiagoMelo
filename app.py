@@ -338,7 +338,7 @@ def checkout(event_id: int):
         "exp_date": clean.get("exp_date", ""),
         "name_on_card": clean.get("name_on_card", ""),
         "billing_email": clean.get("billing_email", ""),
-        "card_last4": clean.get("card_last4", "")
+        "card": clean.get("card", "")
     }
 
     if errors:
@@ -363,13 +363,7 @@ def checkout(event_id: int):
         "total": total,
         "status": "PAID",
         "created_at": datetime.utcnow().isoformat(),
-        "payment": {
-            "card_number": card_number,
-            "exp_date": exp_date,
-            "cvv": cvv,
-            "name_on_card": name_on_card,
-            "billing_email": billing_email
-        }
+        "payment": form_data
     })
 
     save_orders(orders)
