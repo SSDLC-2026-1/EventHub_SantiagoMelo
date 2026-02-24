@@ -62,14 +62,17 @@ def decrypt_aes(texto_cifrado_hex, nonce_hex, tag_hex, clave):
     """
 
     # TODO: Implementar conversión de hex a bytes
+    cifrado_bytes = bytes.fromhex(texto_cifrado_hex)
+    nonce_bytes = bytes.fromhex(nonce_hex)
+    tag_bytes = bytes.fromhex(tag_hex)
 
     # TODO: Crear objeto AES con nonce
-
+    cipher = AES.new(clave, AES.MODE_EAX, nonce=nonce_bytes)
     # TODO: Usar decrypt_and_verify
-
+    texto_bytes = cipher.decrypt_and_verify(cifrado_bytes, tag_bytes)
     # TODO: Convertir resultado a string y retornar
-
-    pass
+    return texto_bytes.decode("utf-8")
+    
 
 # ==========================================================
 # PASSWORD HASHING (PBKDF2 - SHA256)
@@ -101,12 +104,15 @@ def hash_password(password):
     """
 
     # TODO: Generar salt aleatoria
-
+    salt = os.urandom(16)
     # TODO: Derivar clave usando pbkdf2_hmac
-
+    hash_psw = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200000)
     # TODO: Retornar diccionario con salt y hash en formato hex
-
-    pass
+    return (
+        salt.hex(),
+        hash_psw.hex()
+    )
+    
 
 
 
@@ -133,12 +139,14 @@ def verify_password(password, stored_data):
     """
 
     # TODO: Extraer salt e iterations
+    salt = bytes.fromhex(stored_data[0])
+    stored_hash = stored_data[1]
 
     # TODO: Recalcular hash
+    recalculated_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200000)
 
     # TODO: Comparar con compare_digest
-
-    pass
+    return hmac.compare_digest(recalculated_hash.hex(), stored_hash)
 
 
 
@@ -156,8 +164,8 @@ if __name__ == "__main__":
     print("Tag:", tag)
 
     # Cuando implementen decrypt_aes, esto debe funcionar
-    # texto_descifrado = decrypt_aes(texto_cifrado, nonce, tag, clave)
-    # print("Texto descifrado:", texto_descifrado)
+    texto_descifrado = decrypt_aes(texto_cifrado, nonce, tag, clave)
+    print("Texto descifrado:", texto_descifrado)
 
 
     print("\n=== PRUEBA HASH ===")
@@ -165,9 +173,9 @@ if __name__ == "__main__":
     password = "Password123!"
 
     # Cuando implementen hash_password:
-    # pwd_data = hash_password(password)
-    # print("Hash generado:", pwd_data)
+    pwd_data = hash_password(password)
+    print("Hash generado:", pwd_data)
 
     # Cuando implementen verify_password:
-    # print("Verificación correcta:",
-    #       verify_password("Password123!", pwd_data))
+    print("Verificación correcta:",
+          verify_password("Password123!", pwd_data))
