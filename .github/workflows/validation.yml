@@ -1,0 +1,104 @@
+name: Validación de Estructura
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Validar archivos y carpetas requeridas
+        run: |
+          echo "=== Validando archivos y carpetas obligatorias ==="
+          
+          declare -a missing_files
+          declare -a missing_dirs
+          
+          # Archivos requeridos
+          required_files=("app.py" "requirements.txt")
+          
+          # Carpetas requeridas
+          required_dirs=("templates" "static" "data")
+          
+          # Verificar archivos
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              missing_files+=("$file")
+              echo "❌ Falta: $file"
+            else
+              echo "✅ Existe: $file"
+            fi
+          done
+          
+          # Verificar carpetas
+          for dir in "${required_dirs[@]}"; do
+            if [ ! -d "$dir" ]; then
+              missing_dirs+=("$dir")
+              echo "❌ Falta: $dir/"
+            else
+              echo "✅ Existe: $dir/"
+            fi
+          done
+          
+          # Si faltan archivos o carpetas, salir con error
+          if [ ${#missing_files[@]} -gt 0 ] || [ ${#missing_dirs[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ VALIDACIÓN FALLIDA: Archivos o carpetas obligatorias faltantes"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ Todos los archivos y carpetas obligatorios existen"
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Validar formato JSON
+        run: |
+          echo "=== Validando formato JSON ==="
+          
+          json_files=("data/users.json" "data/events.json" "data/orders.json")
+          validation_failed=false
+          
+          for json_file in "${json_files[@]}"; do
+            if [ -f "$json_file" ]; then
+              if python -m json.tool "$json_file" > /dev/null 2>&1; then
+                echo "✅ JSON válido: $json_file"
+              else
+                echo "❌ JSON inválido: $json_file"
+                echo "   Error de formato detectado."
+                validation_failed=true
+              fi
+            else
+              echo "❌ Archivo no encontrado: $json_file"
+              validation_failed=true
+            fi
+          done
+          
+          if [ "$validation_failed" = true ]; then
+            echo ""
+            echo "❌ VALIDACIÓN FALLIDA: Errores en archivos JSON"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ Todos los archivos JSON tienen formato válido"
+      
+      - name: Resumen de validación
+        if: success()
+        run: |
+          echo ""
+          echo "========================================="
+          echo "✅ VALIDACIÓN COMPLETADA EXITOSAMENTE"
+          echo "========================================="
+          echo ""
+          echo "✓ Archivos requeridos: app.py, requirements.txt"
+          echo "✓ Carpetas requeridas: templates/, static/, data/"
+          echo "✓ JSON válido: users.json, events.json, orders.json"
